@@ -1,48 +1,39 @@
-subprojects {
-    afterEvaluate {
-        repositories {
-            mavenCentral()
-            mavenLocal()
-            jcenter()
-        }
+group 'com.robo4j'
 
-        compileJava {
-            doFirst {
-                options.compilerArgs = [
-                        '--module-path', classpath.asPath,
-                ]
-                classpath = files()
-            }
-        }
+apply plugin: 'java'
+apply plugin: 'idea'
+apply plugin: 'maven'
 
-        compileTestJava {
-            inputs.property("moduleName", moduleName)
-            doFirst {
-                options.compilerArgs = [
-                        '--module-path', classpath.asPath,
-                        '--add-modules', 'junit',
-                        '--add-reads', "$moduleName=junit",
-                        '--patch-module', "$moduleName=" + files(sourceSets.test.java.srcDirs).asPath,
-                ]
-                classpath = files()
-            }
-        }
+apply from: 'libraries.gradle'
 
-        test {
-            inputs.property("moduleName", moduleName)
-            doFirst {
-                jvmArgs = [
-                        '--module-path', classpath.asPath,
-                        '--add-modules', 'ALL-MODULE-PATH',
-                        '--add-reads', "$moduleName=junit",
-                        '--patch-module', "$moduleName=" + files(sourceSets.test.java.outputDir).asPath,
-                ]
-                classpath = files()
-            }
-        }
+version "${robo4jVersion}"
+
+sourceCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+    mavenLocal()
+    maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
+}
+
+// Create a single Jar with most dependencies
+task fatJar(type: Jar) {
+    manifest {
+        attributes 'Implementation-Title': 'robo4j-rpi-servos-client',
+                'Implementation-Version': version,
+                'Main-Class': 'com.robo4j.rpi.servos.Main'
     }
+    baseName = 'robo4j-rpi-servos-client'
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+}
+
+dependencies {
+    compile "com.robo4j:robo4j-core:${robo4jVersion}"
+    compile "com.robo4j:robo4j-hw-rpi:${robo4jVersion}"
+    compile "com.robo4j:robo4j-socket-http:${robo4jVersion}"
 }
 
 task wrapper(type: Wrapper) {
-    gradleVersion = "4.7"
+    gradleVersion = "${gradleVersion}"
 }
