@@ -1,0 +1,77 @@
+plugins {
+    id 'java'
+    id 'idea'
+    id 'application'
+}
+
+apply from: 'libraries.gradle'
+
+import java.util.regex.Matcher
+
+
+repositories {
+    mavenCentral()
+    mavenLocal()
+    maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
+}
+
+ext.moduleName = 'com.robo4j.rpi.servos.application'
+
+// tag::run[]
+mainClassName = "$moduleName/com.robo4j.rpi.servos.application.Main" // <1>
+
+jar {
+    manifest {
+        attributes 'Main-Class': 'com.robo4j.rpi.servos.application.Main'
+    }
+}
+
+task fatJar(type: Jar) {
+    manifest {
+        attributes 'Implementation-Title': 'robo4j-rpi-servo-client',
+                'Implementation-Version': '0.1-SNAPSHOT',
+                'Main-Class': 'com.robo4j.rpi.servos.application.Main'
+    }
+    //baseName = project.name + '-all'
+    baseName = 'robo4j-rpi-servo-client'
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+}
+
+dependencies {
+    compile "com.robo4j:robo4j-socket-http:${robo4jVersion}"
+}
+
+run {
+    inputs.property("moduleName", moduleName)
+    doFirst {
+        jvmArgs = [
+            '--module-path', classpath.asPath,
+            '--module', mainClassName // <2>
+        ]
+        classpath = files()
+    }
+}
+// end::run[]
+
+// tag::startScripts[]
+startScripts {
+    inputs.property("moduleName", moduleName)
+    doFirst {
+        classpath = files()
+        defaultJvmOpts = [
+            '--module-path', 'APP_HOME_LIBS',  // <1>
+            '--module', mainClassName
+        ]
+    }
+    doLast{
+        def bashFile = new File(outputDir, applicationName)
+        String bashContent = bashFile.text
+        bashFile.text = bashContent.replaceFirst('APP_HOME_LIBS', Matcher.quoteReplacement('$APP_HOME/lib'))
+
+        def batFile = new File(outputDir, applicationName + ".bat")
+        String batContent = batFile.text
+        batFile.text = batContent.replaceFirst('APP_HOME_LIBS', Matcher.quoteReplacement('%APP_HOME%\\lib'))
+    }
+}
+// end::startScripts[]

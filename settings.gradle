@@ -1,0 +1,3 @@
+rootProject.name = "robo4j-rpi-servos-client"
+
+include 'application'
