@@ -30,10 +30,6 @@ public class Main {
         final RoboReference<StringMessage> ctrlRef = ctx.getReference("controller");
         System.out.println(SystemUtil.printSocketEndPoint(httpRef, ctrlRef));
 
-        // Schedule one initial button press on startup, just because I am too
-        // lazy to write tests.
-        ctrlRef.sendMessage(new StringMessage("not implemented, yet"));
-
         System.out.println("Press enter to quit!");
         System.in.read();
         ctx.shutdown();
